@@ -122,7 +122,7 @@ class Get(Resource):
 		sentence = users.find({"Username": Username})[0]["Sentence"]
 
 		ret_json = {
-			"status": 200
+			"status": 200,
 			"sentence": str(sentence)
 		}
 
