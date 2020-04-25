@@ -2,6 +2,7 @@ from flask import Flask, jsonify, request
 from flask_restful import Api, Resource
 from pymongo import MongoClient
 
+# Define app and api
 app = Flask(__name__)
 api = Api(app)
 
