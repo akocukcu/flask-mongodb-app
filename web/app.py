@@ -120,7 +120,7 @@ class Get(Resource):
 
 		users.update({"Username": username}, {"$set": {"Tokens": num_tokens-1}})
 
-		sentence = users.find({"Username": Username})[0]["Sentence"]
+		sentence = users.find({"Username": username})[0]["Sentence"]
 
 		ret_json = {
 			"status": 200,
