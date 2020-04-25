@@ -47,6 +47,7 @@ class Add(Resource):
         ret = x + y
         ret_map = {"Message":ret, "Status Code":200}
 
+        # return as json
         return jsonify(ret_map)
 
 class Subtract(Resource):
