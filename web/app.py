@@ -44,6 +44,9 @@ def verify_pw(username, password):
 		"Username": username
 	})[0]["Password"]
 
+	print("hashed password for posted string: ", bcrypt.hashpw(password.encode("utf8"), bcrypt.gensalt()))
+	print("hashed password inside database: ", hashed_pw)
+
 	return bcrypt.hashpw(password.encode("utf8"), bcrypt.gensalt()) == hashed_pw
 
 def count_tokens(username):
