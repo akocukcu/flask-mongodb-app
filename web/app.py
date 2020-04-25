@@ -118,7 +118,7 @@ class Get(Resource):
 			return jsonify(ret_json)
 
 
-		users.update({"Username", username}, {"$set": {"Tokens": num_tokens-1}})
+		users.update({"Username": username}, {"$set": {"Tokens": num_tokens-1}})
 
 		sentence = users.find({"Username": Username})[0]["Sentence"]
 
