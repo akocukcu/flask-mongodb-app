@@ -1,73 +1,138 @@
 from flask import Flask, jsonify, request
 from flask_restful import Api, Resource
 from pymongo import MongoClient
+import bcrypt
 
-# Define app and api
 app = Flask(__name__)
 api = Api(app)
 
 client = MongoClient("mongodb://db:27017")
-db = client.aNewDB
-user_num = db["UserNum"]
+db = client.SentencesDatabase
+users = db["Users"]
 
-user_num.insert({
-    'num_of_users':0
-})
+class Register(Resource):
+	def post(self):
 
-class Visit(Resource):
-    def get(self):
-        previous_number = user_num.find({})[0]['num_of_users']
-        new_number = previous_number + 1
-        user_num.update({}, {"$set" : {"num_of_users":new_number}})
-        return "Hello user " + str(new_number)
+		posted_data = request.get_json()
 
-def check_posted_data(posted_data, function_name):
-    if function_name == "add":
-        if "x" not in posted_data or "y" not in posted_data:
-            return 301
-        else:
-            return 200
+		username = posted_data["username"]
+		password = posted_data["password"]
 
-class Add(Resource):
-    def post(self):
-        posted_data = request.get_json()
-
-        status_code = check_posted_data(posted_data, "add")
-        
-        if status_code != 200:
-            ret_json = {"Message": "An error occured", "Status Code": status_code}
-            return jsonify(ret_json)
-
-        x = posted_data["x"]
-        y = posted_data["y"]
-
-        x = int(x)
-        y = int(y)
-
-        ret = x + y
-        ret_map = {"Message":ret, "Status Code":200}
-
-        # return as json
-        return jsonify(ret_map)
-
-class Subtract(Resource):
-    pass
-
-class Multiply(Resource):
-    pass
-
-class Divide(Resource):
-    pass
+		hashed_pw = bcrypt.hashpw(password.encode("utf8"), bcrypt.gensalt())
 
 
-api.add_resource(Add, "/add")
-api.add_resource(Visit, "/hello")
+		users.insert({
+			"Username": username,
+			"Password": hashed_pw,
+			"Sentence": "",
+			"Tokens": 6
 
-@app.route('/')
-def hello_world():
-    return "Hello world!"
+		})
+
+
+		ret_json = {
+			"status": 200,
+			"msg": "You successfully signed up for the API"
+		}
+
+
+		return jsonify(ret_json)
+
+
+def verify_pw(username, password):
+	hashed_pw = users.find({
+		"Username": username
+	})[0]["Password"]
+
+	return bcrypt.hashpw(password.encode("utf8"), bcrypt.gensalt()) == hashed_pw
+
+def count_tokens(username):
+	tokens = users.find({
+		"Username": username
+	})[0]["Tokens"]
+
+	return tokens
+
+
+class Store(Resource):
+	def post(self):
+
+		posted_data = request.get_json()
+
+		username = posted_data["username"]
+		password = posted_data["password"]
+		sentence = posted_data["sentence"]
+
+		correct_pw = verify_pw(username, password)
+
+		if not correct_pw:
+			ret_json = {
+				"status": 302
+			}
+
+			return jsonify(ret_json)
+
+
+		num_tokens = count_tokens(username)
+
+		if num_tokens <= 0:
+			ret_json = {
+				"status": 301
+			}
+
+			return jsonify(ret_json)
+
+
+		users.update({"Username": username}, {"$set": {"Sentence": sentence, "Tokens": num_tokens-1}})
+
+		ret_json = {
+			"status": 200,
+			"msg": "sentence saved successfully"
+		}
+
+		return jsonify(ret_json)
+
+
+class Get(Resource):
+	def post(self):
+		posted_data = request.get_json()
+
+		username = posted_data["username"]
+		password = posted_data["password"]
+
+		correct_pw = verify_pw(username, password)
+
+		if not correct_pw:
+			ret_json = {
+				"status": 302
+			}
+			return jsonify(ret_json)
+
+		num_tokens = count_tokens(username)
+
+		if num_tokens <= 0:
+			ret_json = {
+				status: 301
+			}
+			return jsonify(ret_json)
+
+
+		users.update({"Username", username}, {"$set": {"Tokens": num_tokens-1}})
+
+		sentence = users.find({"Username": Username})[0]["Sentence"]
+
+		ret_json = {
+			"status": 200
+			"sentence": str(sentence)
+		}
+
+		return jsonify(ret_json)
+
+
+api.add_resource(Register, '/register')
+api.add_resource(Store, '/store')
+api.add_resource(Get, '/get')
 
 
 if __name__ == "__main__":
-    app.run(host='0.0.0.0')
-
+	app.run(host='0.0.0.0')
