@@ -2,9 +2,7 @@ from flask import Flask, jsonify, request
 from flask_restful import Api, Resource
 from pymongo import MongoClient
 import bcrypt
-import logging
 
-logging.basicConfig(level=logging.DEBUG)
 
 app = Flask(__name__)
 api = Api(app)
@@ -47,10 +45,7 @@ def verify_pw(username, password):
 		"Username": username
 	})[0]["Password"]
 
-	app.logger.info("hashed password for posted string: ", bcrypt.hashpw(password.encode("utf8"), bcrypt.gensalt()))
-	app.logger.info("hashed password inside database: ", hashed_pw)
-
-	return bcrypt.hashpw(password.encode("utf8"), bcrypt.gensalt()) == hashed_pw
+	return bcrypt.hashpw(password.encode("utf8"), hashed_pw) == hashed_pw
 
 def count_tokens(username):
 	tokens = users.find({
